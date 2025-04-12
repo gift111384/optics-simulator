@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>全反射与折射现象模拟器</title>
+    <style>
+        .simulator-container {
+            max-width: 600px;
+            margin: 20px auto;
+            padding: 20px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        .input-group {
+            margin: 15px 0;
+        }
+        label {
+            display: inline-block;
+            width: 120px;
+        }
+        input[type="number"] {
+            width: 100px;
+            padding: 5px;
+        }
+        button {
+            background: #2196f3;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+        button:hover {
+            background: #1976d2;
+        }
+        .result-box {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 5px;
+            border: 1px solid;
+        }
+        .special-case {
+            background: #e3f2fd;
+            border-color: #2196f3;
+        }
+        .error-message {
+            background: #ffebee;
+            border-color: #ff4444;
+            color: #cc0000;
+        }
+        .warning {
+            background: #fff3e0;
+            border-color: #ff9800;
+        }
+    </style>
+</head>
+<body>
+    <div class="simulator-container">
+        <h2>全反射与折射现象模拟器</h2>
+        <div class="input-group">
+            <label>介质1折射率 n₁:</label>
+            <input type="number" id="n1" step="0.01" value="1.5">
+        </div>
+        <div class="input-group">
+            <label>介质2折射率 n₂:</label>
+            <input type="number" id="n2" step="0.01" value="1.0">
+        </div>
+        <div class="input-group">
+            <label>入射角θ₁(度):</label>
+            <input type="number" id="theta1" min="0" max="90" value="45">
+        </div>
+        <button onclick="calculateCriticalAngle()">计算</button>
+        <div id="result"></div>
+    </div>
+
+    <script>
+        function calculateCriticalAngle() {
+            const n1 = parseFloat(document.getElementById('n1').value);
+            const n2 = parseFloat(document.getElementById('n2').value);
+            const theta1 = parseFloat(document.getElementById('theta1').value);
+            const resultDiv = document.getElementById('result');
+            resultDiv.innerHTML = '';
+
+            // 输入验证
+            if ([n1, n2, theta1].some(v => isNaN(v) || v <= 0)) {
+                showError('请输入有效的正数值');
+                return;
+            }
+            if (theta1 < 0 || theta1 > 90) {
+                showError('入射角需在0-90度之间');
+                return;
+            }
+
+            // 垂直入射处理
+            if (theta1 === 0) {
+                showSpecialCase(`
+                    <strong>垂直入射特殊情况：</strong><br>
+                    ➜ 折射角θ₂ = 0°<br>
+                    <small>光线垂直界面，不发生偏折</small>
+                `);
+                return;
+            }
+
+            const theta1Rad = theta1 * Math.PI / 180;
+
+            // 判断介质关系
+            if (n1 > n2) {
+                handleDenserToLighter(n1, n2, theta1, theta1Rad);
+            } else if (n1 < n2) {
+                handleLighterToDenser(n1, n2, theta1Rad);
+            } else {
+                handleEqualRefractiveIndices(theta1);
+            }
+        }
+
+        function handleDenserToLighter(n1, n2, theta1, theta1Rad) {
+            const criticalAngle = (Math.asin(n2 / n1) * 180 / Math.PI).toFixed(2);
+            let resultHTML = `<div class="result-box"><strong>临界角：</strong>${criticalAngle}°<br>`;
+
+            if (theta1 >= criticalAngle) {
+                resultHTML += `<span style="color:#dc3545;">发生全反射（入射角 ≥ 临界角）</span>`;
+            } else {
+                const theta2 = calculateRefractionAngle(n1, n2, theta1Rad);
+                resultHTML += `<strong>折射角θ₂：</strong>${theta2}°`;
+            }
+            resultHTML += `<br><small>光密介质到光疏介质(n₁ > n₂)</small></div>`;
+            document.getElementById('result').innerHTML = resultHTML;
+        }
+
+        function handleLighterToDenser(n1, n2, theta1Rad) {
+            const theta2 = calculateRefractionAngle(n1, n2, theta1Rad);
+            showSpecialCase(`
+                <strong>光疏到光密介质：</strong><br>
+                ➜ 折射角θ₂：${theta2}°<br>
+                <small>此时不会发生全反射(n₁ < n₂)</small>
+            `);
+        }
+
+        function handleEqualRefractiveIndices(theta1) {
+            showSpecialCase(`
+                <strong>等折射率介质：</strong><br>
+                ➜ 折射角θ₂：${theta1.toFixed(2)}°<br>
+                <small>光线无偏折直接通过界面(n₁ = n₂)</small>
+            `);
+        }
+
+        function calculateRefractionAngle(n1, n2, theta1Rad) {
+            const sinTheta2 = (n1 * Math.sin(theta1Rad)) / n2;
+            return (Math.asin(sinTheta2) * 180 / Math.PI).toFixed(2);
+        }
+
+        function showSpecialCase(content) {
+            document.getElementById('result').innerHTML = `
+                <div class="special-case result-box">${content}</div>`;
+        }
+
+        function showError(message) {
+            document.getElementById('result').innerHTML = `
+                <div class="error-message result-box">${message}</div>`;
+        }
+    </script>
+</body>
+</html>
