@@ -122,14 +122,14 @@
                 const theta2 = calculateRefractionAngle(n1, n2, theta1Rad);
                 resultHTML += `<strong>折射角θ₂：</strong>${theta2}°`;
             }
-            resultHTML += `<br><small>光密介质到光疏介质(n₁ > n₂)</small></div>`;
+            resultHTML += `<br><small>光从光密介质进入光疏介质(n₁ > n₂)</small></div>`;
             document.getElementById('result').innerHTML = resultHTML;
         }
 
         function handleLighterToDenser(n1, n2, theta1Rad) {
             const theta2 = calculateRefractionAngle(n1, n2, theta1Rad);
             showSpecialCase(`
-                <strong>光疏到光密介质：</strong><br>
+                <strong>光从光疏介质进入光密介质：</strong><br>
                 ➜ 折射角θ₂：${theta2}°<br>
                 <small>此时不会发生全反射(n₁ < n₂)</small>
             `);
